@@ -59,7 +59,7 @@ func altusAPIKeyAuth(baseAPIPath, accessKeyID, privateKey string) runtime.Client
 func resourcePath(baseAPIPath, path, query string) string {
 	base := strings.ReplaceAll(baseAPIPath+path, "//", "/")
 	if len(query) > 0 {
-		return fmt.Sprint("%?%", base, query)
+		return fmt.Sprintf("%s?%s", base, query)
 	}
 	return base
 }
