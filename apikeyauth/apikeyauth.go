@@ -16,11 +16,12 @@ import (
 )
 
 const (
-	altusAuthHeader = "x-altus-auth"
-	altusDateHeader = "x-altus-date"
-	signPattern     = "%s\napplication/json\n%s\n%s\ned25519v1"
-	layout          = "Mon, 02 Jan 2006 15:04:05 GMT"
-	authMethod      = "ed25519v1"
+	altusAuthHeader   = "x-altus-auth"
+	altusDateHeader   = "x-altus-date"
+	contentTypeHeader = "content-type"
+	signPattern       = "%s\napplication/json\n%s\n%s\ned25519v1"
+	layout            = "Mon, 02 Jan 2006 15:04:05 GMT"
+	authMethod        = "ed25519v1"
 )
 
 type metastr struct {
@@ -44,6 +45,10 @@ func altusAPIKeyAuth(baseAPIPath, accessKeyID, privateKey string) runtime.Client
 	return runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
 		date := formatdate()
 		err := r.SetHeaderParam(altusAuthHeader, authHeader(accessKeyID, privateKey, r.GetMethod(), resourcePath(baseAPIPath, r.GetPath()), date))
+		if err != nil {
+			return err
+		}
+		err = r.SetHeaderParam(contentTypeHeader, "application/json")
 		if err != nil {
 			return err
 		}
