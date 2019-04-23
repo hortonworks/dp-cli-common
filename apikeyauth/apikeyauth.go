@@ -44,7 +44,7 @@ func GetAPIKeyAuthTransport(address, baseAPIPath, accessKeyID, privateKey string
 func altusAPIKeyAuth(baseAPIPath, accessKeyID, privateKey string) runtime.ClientAuthInfoWriter {
 	return runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
 		date := formatdate()
-		err := r.SetHeaderParam(altusAuthHeader, authHeader(accessKeyID, privateKey, r.GetMethod(), resourcePath(baseAPIPath, r.GetPath()), date))
+		err := r.SetHeaderParam(altusAuthHeader, authHeader(accessKeyID, privateKey, r.GetMethod(), resourcePath(baseAPIPath, r.GetPath(), r.GetQueryParams().Encode()), date))
 		if err != nil {
 			return err
 		}
@@ -56,8 +56,12 @@ func altusAPIKeyAuth(baseAPIPath, accessKeyID, privateKey string) runtime.Client
 	})
 }
 
-func resourcePath(baseAPIPath, path string) string {
-	return strings.ReplaceAll(baseAPIPath+path, "//", "/")
+func resourcePath(baseAPIPath, path, query string) string {
+	base := strings.ReplaceAll(baseAPIPath+path, "//", "/")
+	if len(query) > 0 {
+		return fmt.Sprint("%?%", base, query)
+	}
+	return base
 }
 
 func authHeader(accessKeyID, privateKey, method, path, date string) string {
