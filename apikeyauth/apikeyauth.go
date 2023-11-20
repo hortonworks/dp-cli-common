@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -60,6 +61,13 @@ func GetActorCrnAuthTransport(address, baseAPIPath, actorCrn string) *utils.Tran
 	return cbTransport
 }
 
+func AddAltusAPIKeyAuthHeaders(r *http.Request, baseAPIPath, accessKeyID, privateKey string) {
+	date := formatdate()
+	r.Header.Add(altusAuthHeader, authHeader(accessKeyID, privateKey, r.Method, resourcePath("", r.URL.Path, r.URL.RawQuery), date))
+	r.Header.Add(altusDateHeader, date)
+	r.Header.Add(contentTypeHeader, "application/json")
+}
+
 func altusActorCrnAuth(baseAPIPath, actorCrn string) runtime.ClientAuthInfoWriter {
 	return runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
 		return r.SetHeaderParam(altusActorCrnHeader, actorCrn)
@@ -70,7 +78,9 @@ func altusActorCrnAuth(baseAPIPath, actorCrn string) runtime.ClientAuthInfoWrite
 func altusAPIKeyAuth(baseAPIPath, accessKeyID, privateKey string) runtime.ClientAuthInfoWriter {
 	return runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
 		date := formatdate()
-		err := r.SetHeaderParam(altusAuthHeader, authHeader(accessKeyID, privateKey, r.GetMethod(), resourcePath(baseAPIPath, r.GetPath(), r.GetQueryParams().Encode()), date))
+		path := resourcePath(baseAPIPath, r.GetPath(), r.GetQueryParams().Encode())
+		log.Debugf("[altusAPIKeyAuth] : %s, %s, %s, %s, %s", r.GetMethod(), baseAPIPath, r.GetPath(), r.GetQueryParams().Encode(), path)
+		err := r.SetHeaderParam(altusAuthHeader, authHeader(accessKeyID, privateKey, r.GetMethod(), path, date))
 		if err != nil {
 			return err
 		}
@@ -100,6 +110,7 @@ func escapePath(path string) string {
 }
 
 func authHeader(accessKeyID, privateKey, method, path, date string) string {
+	log.Debugf("authHeader: M:" + method + " P:" + path)
 	return fmt.Sprintf("%s.%s", urlsafeMeta(accessKeyID, privateKey), urlsafeSignature(privateKey, method, path, date))
 }
 
