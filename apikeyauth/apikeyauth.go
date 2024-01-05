@@ -65,7 +65,6 @@ func AddAltusAPIKeyAuthHeaders(r *http.Request, baseAPIPath, accessKeyID, privat
 	date := formatdate()
 	r.Header.Add(altusAuthHeader, authHeader(accessKeyID, privateKey, r.Method, resourcePath("", r.URL.Path, r.URL.RawQuery), date))
 	r.Header.Add(altusDateHeader, date)
-	r.Header.Add(contentTypeHeader, "application/json")
 }
 
 func altusActorCrnAuth(baseAPIPath, actorCrn string) runtime.ClientAuthInfoWriter {
